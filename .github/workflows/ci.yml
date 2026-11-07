@@ -108,12 +108,16 @@ jobs:
           python - <<'PY'
           import json
           data = json.load(open("findings.json"))
-          assert data["count"] == 1, data
-          assert data["high"] == 1, data
-          item = data["findings"][0]
+          # Scope the assertions to the planted file; the repository's own
+          # README example is a separate, baselined finding.
+          leak = [f for f in data["findings"] if f["path"] == "leak.py"]
+          assert len(leak) == 1, leak
+          item = leak[0]
           assert item["detector"] == "aws-access-key-id", item
+          assert item["confidence"] == "high", item
           leaked = "AKIA" + "4RTZ7KLM2NOPQ3RS"
           assert leaked not in json.dumps(data), "full secret leaked into JSON"
+          assert data["high"] >= 1, data
           print("json ok:", item["redacted"])
           PY
 

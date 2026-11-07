@@ -80,7 +80,9 @@ def _skippable(path: str) -> bool:
     if Path(lowered).name in _SKIP_NAMES:
         return True
     parts = lowered.replace("\\", "/").split("/")
-    return any(part in _SKIP_DIRS for part in parts)
+    # `pip install -e .` drops a `*.egg-info/` tree next to the package, and
+    # its PKG-INFO is just the README again — scanning it double-reports.
+    return any(part in _SKIP_DIRS or part.endswith(".egg-info") for part in parts)
 
 
 def scan_working_tree(root: Path, max_bytes: int = 1_000_000) -> List[Finding]:

@@ -256,6 +256,15 @@ class TestWorkingTree(unittest.TestCase):
             (cache / "mod.cpython-311.pyc").write_bytes(AWS_KEY.encode())
             self.assertEqual(scan_working_tree(root), [])
 
+    def test_skips_editable_install_metadata(self):
+        # `pip install -e .` writes *.egg-info/PKG-INFO, a copy of the README.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            info = root / "my_pkg.egg-info"
+            info.mkdir()
+            (info / "PKG-INFO").write_text(f'key = "{AWS_KEY}"\n', encoding="utf-8")
+            self.assertEqual(scan_working_tree(root), [])
+
     def test_clean_repo(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
