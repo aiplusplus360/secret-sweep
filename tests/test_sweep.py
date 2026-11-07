@@ -368,5 +368,39 @@ class TestBaselineKeys(unittest.TestCase):
         self.assertNotEqual(a.key, b.key)
 
 
+class TestCli(unittest.TestCase):
+    """The adoption flow has to survive `set -e` in a shell script."""
+
+    def test_write_baseline_succeeds_even_when_secrets_exist(self):
+        from secretsweep.cli import main
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "config.py").write_text(f'K = "{AWS_KEY}"\n', encoding="utf-8")
+            baseline = root / "baseline.txt"
+            code = main([str(root), "--no-history", "--write-baseline", str(baseline)])
+            self.assertEqual(code, 0)
+            self.assertTrue(baseline.exists())
+
+    def test_gate_fails_on_new_secret_and_passes_with_baseline(self):
+        from secretsweep.cli import main
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "config.py").write_text(f'K = "{AWS_KEY}"\n', encoding="utf-8")
+            baseline = root / "baseline.txt"
+            main([str(root), "--no-history", "--write-baseline", str(baseline)])
+            self.assertEqual(
+                main([str(root), "--no-history", "--baseline", str(baseline)]), 0
+            )
+            # A second, different secret is not covered by the baseline.
+            (root / "other.py").write_text(
+                f'K = "{AWS_KEY_OTHER}"\n', encoding="utf-8"
+            )
+            self.assertEqual(
+                main([str(root), "--no-history", "--baseline", str(baseline)]), 1
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

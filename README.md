@@ -68,6 +68,8 @@ git add .secret-baseline
 ```
 
 Then scan with `--baseline .secret-baseline` and gate on new findings only.
+`--write-baseline` exits 0 on success even when it found secrets — you reviewed
+them and accepted them, so the documented adoption script survives `set -e`.
 
 Baseline keys are `detector | path | fingerprint`, where the fingerprint is a
 truncated SHA-256 of the matched value. The file is committed, so it is

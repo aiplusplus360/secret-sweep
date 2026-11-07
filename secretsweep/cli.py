@@ -124,6 +124,11 @@ def cmd_scan(args: argparse.Namespace) -> int:
             encoding="utf-8",
         )
         print(f"\nwrote baseline: {args.write_baseline}", file=sys.stderr)
+        # Adopting the tool on a repo with existing secrets is the whole point
+        # of this flag: the user just reviewed the findings and accepted them.
+        # Exiting non-zero here would abort the documented `set -e` adoption
+        # flow at the exact moment it succeeded.
+        return EXIT_CLEAN
 
     threshold = CONFIDENCE_ORDER[args.fail_on]
     if any(CONFIDENCE_ORDER[f.confidence] <= threshold for f in findings):
